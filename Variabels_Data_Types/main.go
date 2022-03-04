@@ -50,4 +50,7 @@ func main() {
 	*/
 	var bool_1 bool = true
 	fmt.Println("Angka bool : ", bool_1)
+
+	var bool_2 bool
+	fmt.Println("Angka bool : ", bool_2)
 }
