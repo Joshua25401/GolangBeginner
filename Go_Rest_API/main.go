@@ -23,8 +23,14 @@ type Author struct {
 	Lastname  string `json:"lastname"`
 }
 
+type Acknowledge struct {
+	Code int32  `json:"code"`
+	Data string `json:"data"`
+}
+
 // Init Books data as a Slice
 var books []Book
+var ack Acknowledge
 
 // Function to handle API requests
 func getBooks(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +68,24 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 
 	book.Book_ID = strconv.Itoa(rand.Intn(10000000))
 	books = append(books, book)
-	json.NewEncoder(w).Encode(book)
+
+	ack = Acknowledge{
+		Code: 200,
+		Data: "Ok",
+	}
+
+	log.Println("Successfull Adding Data ", book)
+
+	err = json.NewEncoder(w).Encode(ack)
+	if err != nil {
+		ack = Acknowledge{
+			Code: 404,
+			Data: err.Error(),
+		}
+		json.NewEncoder(w).Encode(ack)
+		log.Fatal(err)
+		return
+	}
 }
 func updateBook(w http.ResponseWriter, r *http.Request) {}
 
@@ -76,23 +99,23 @@ func deleteBook(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	json.NewEncoder(w).Encode(books)
+	err := json.NewEncoder(w).Encode(books)
+	if err != nil {
+		return
+	}
 }
 
-func main() {
-
-	// Router
-	router := mux.NewRouter()
-
-	// Pre-Populate data
-	books = append(books,
+func prePopulate(books *[]Book) {
+	*books = append(*books,
 		Book{
 			Book_ID:    "1",
 			Book_Isbn:  "11319029",
 			Book_Title: "Dasar Pemrograman",
 			Book_Author: &Author{
 				Firstname: "Joshua",
-				Lastname:  "Ryandafres"}},
+				Lastname:  "Ryandafres",
+			},
+		},
 		Book{
 			Book_ID:    "2",
 			Book_Isbn:  "11319014",
@@ -102,6 +125,17 @@ func main() {
 				Lastname:  "Hutapea",
 			}},
 	)
+}
+
+func main() {
+
+	// Router
+	router := mux.NewRouter()
+
+	// Pre-Populate data
+	// Use Passing by Reference
+	log.Println("Pre Populating Data Array!")
+	prePopulate(&books)
 	log.Println("API Server is Running...")
 
 	// Handle Routes
